@@ -1,0 +1,54 @@
+<%- include("partials/header.ejs")%>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-6 offset-md-3">
+      <!-- Adjust the col size as needed -->
+      <h1>Price quote</h1>
+
+      <div class="row">
+        <div class="col-md-3">
+          <!-- Adjust the col size as needed -->
+          <h2><%= locals.sample %></h2>
+
+          <!-- Ticker Select Combo Box -->
+          <form action="/ticker" method="POST" class="form-inline">
+            <div class="form-group mr-2">
+              <label for="ticker" class="mr-2">Ticker:</label>
+              <select name="ticker" id="ticker" class="form-control">
+                <option value="xlp">XLP</option>
+                <option value="aapl">AAPL</option>
+                <option value="goog">GOOG</option>
+                <option value="msft">MSFT</option>
+                <!-- Add more options as needed -->
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Get Data</button>
+          </form>
+        </div>
+
+        <% if (locals.content && locals.content["Meta Data"]) { %>
+
+        <h3>Quoted ticker: <%= content["Meta Data"]["2. Symbol"] %></h3>
+        <h3>
+          Last Refreshed: <%= content["Meta Data"]["3. Last Refreshed"] %>
+        </h3>
+        <h3>Interval: <%= content["Meta Data"]["4. Interval"] %></h3>
+        <h3>Output Size: <%= content["Meta Data"]["5. Output Size"] %></h3>
+        <h3>Time Zone: <%= content["Meta Data"]["6. Time Zone"] %></h3>
+
+        <!-- content["Time Series (5min)"] is an object, not an array. You need to get
+        the keys of the object and sort them to find the latest timestamp. -->
+        <% const timeSeries = content["Time Series (5min)"]; const
+        latestTimestamp = Object.keys(timeSeries).sort().pop(); const latestData
+        = timeSeries[latestTimestamp]; %>
+        <h3>Latest price: <%= latestData["4. close"] %></h3>
+        <% } else { %>
+        <p>No data available.</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <%- include("partials/footer.ejs")%>
+</div>
