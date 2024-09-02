@@ -15,6 +15,7 @@ import bcrypt from "bcrypt"; //to hash password
 import passport from "passport"; //For login sesstion
 import { Strategy } from "passport-local"; //For login sesstion
 import session from "express-session"; //For login sesstion
+import GoogleStrategy from "passport-google-oauth2"; // For Google login authentication
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -94,6 +95,21 @@ app.get("/secrets", async (req, res) => {
     res.redirect("/login");
   }
 });
+
+app.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
+);
+
+app.get(
+  "/auth/google/secrets",
+  passport.authenticate("google", {
+    successRedirect: "/secrets",
+    failureRedirect: "/login",
+  })
+);
 
 app.get("/logout", (req, res) => {
   req.logout((err) => {
@@ -204,39 +220,39 @@ passport.use(
   })
 );
 
-// passport.use(
-//   "google",
-//   new GoogleStrategy(
-//     {
-//       clientID: process.env.GOOGLE_CLIENT_ID,
-//       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-//       callbackURL: "http://localhost:3000/auth/google/secrets",
-//       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
-//     },
-//     async (accessToken, refreshToken, profile, cb) => {
-//       console.log(profile);
-//       try {
-//         //check if use exist in db
-//         const result = await db.query("SELECT * FROM users WHERE email = $1", [
-//           profile.email,
-//         ]);
-//         if (result.rows.length === 0) {
-//           //if user doesn't exist in db
-//           const newUser = await db.query(
-//             "INSERT INTO users (email, password) VALUES ($1, $2)",
-//             [profile.email, "goggle"]
-//           );
-//           return cb(null, newUser.rows[0]);
-//         } else {
-//           //if user exist in db
-//           return cb(null, result.rows[0]);
-//         }
-//       } catch (err) {
-//         return cb(err);
-//       }
-//     }
-//   )
-// );
+passport.use(
+  "google",
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID, //set up in Google cloud
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET, //set up in Google cloud
+      callbackURL: "http://localhost:3000/auth/google/secrets",
+      userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
+    },
+    async (accessToken, refreshToken, profile, cb) => {
+      console.log(profile);
+      try {
+        //check if use exist in db
+        const result = await db.query("SELECT * FROM users WHERE email = $1", [
+          profile.email,
+        ]);
+        if (result.rows.length === 0) {
+          //if user doesn't exist in db
+          const newUser = await db.query(
+            "INSERT INTO users (email, password) VALUES ($1, $2)",
+            [profile.email, "goggle"]
+          );
+          return cb(null, newUser.rows[0]);
+        } else {
+          //if user exist in db
+          return cb(null, result.rows[0]);
+        }
+      } catch (err) {
+        return cb(err);
+      }
+    }
+  )
+);
 //-----------------------------------------------
 
 //Serialize passport
